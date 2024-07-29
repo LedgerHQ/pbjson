@@ -20,11 +20,8 @@
 #[doc(hidden)]
 pub mod private {
     /// Re-export base64
-    pub use base64;
+    pub use hex;
 
-    use base64::engine::DecodePaddingMode;
-    use base64::engine::{GeneralPurpose, GeneralPurposeConfig};
-    use base64::Engine;
     use serde::de::Visitor;
     use serde::Deserialize;
     use std::borrow::Cow;
@@ -59,42 +56,20 @@ pub mod private {
         }
     }
 
-    struct Base64Visitor;
+    struct HexStringVisitor;
 
-    impl<'de> Visitor<'de> for Base64Visitor {
+    impl<'de> Visitor<'de> for HexStringVisitor {
         type Value = Vec<u8>;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            formatter.write_str("a base64 string")
+            formatter.write_str("a hex string")
         }
 
         fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
         where
             E: serde::de::Error,
         {
-            const INDIFFERENT_PAD: GeneralPurposeConfig = GeneralPurposeConfig::new()
-                .with_decode_padding_mode(DecodePaddingMode::Indifferent);
-            const STANDARD_INDIFFERENT_PAD: GeneralPurpose =
-                GeneralPurpose::new(&base64::alphabet::STANDARD, INDIFFERENT_PAD);
-            const URL_SAFE_INDIFFERENT_PAD: GeneralPurpose =
-                GeneralPurpose::new(&base64::alphabet::URL_SAFE, INDIFFERENT_PAD);
-
-            let decoded = STANDARD_INDIFFERENT_PAD
-                .decode(s)
-                .or_else(|e| match e {
-                    // Either standard or URL-safe base64 encoding are accepted
-                    //
-                    // The difference being URL-safe uses `-` and `_` instead of `+` and `/`
-                    //
-                    // Therefore if we error out on those characters, try again with
-                    // the URL-safe character set
-                    base64::DecodeError::InvalidByte(_, c) if c == b'-' || c == b'_' => {
-                        URL_SAFE_INDIFFERENT_PAD.decode(s)
-                    }
-                    _ => Err(e),
-                })
-                .map_err(serde::de::Error::custom)?;
-            Ok(decoded)
+            hex::decode(s).map_err(serde::de::Error::custom)
         }
     }
 
@@ -109,7 +84,7 @@ pub mod private {
         where
             D: serde::Deserializer<'de>,
         {
-            Ok(Self(deserializer.deserialize_str(Base64Visitor)?.into()))
+            Ok(Self(deserializer.deserialize_str(HexStringVisitor)?.into()))
         }
     }
 
@@ -128,21 +103,14 @@ pub mod private {
                 let len = rng.gen_range(50..100);
                 let raw: Vec<_> = std::iter::from_fn(|| Some(rng.gen())).take(len).collect();
 
-                for config in [
-                    base64::engine::general_purpose::STANDARD,
-                    base64::engine::general_purpose::STANDARD_NO_PAD,
-                    base64::engine::general_purpose::URL_SAFE,
-                    base64::engine::general_purpose::URL_SAFE_NO_PAD,
-                ] {
-                    let encoded = config.encode(&raw);
+                let encoded = hex::encode_upper(&raw);
 
-                    let deserializer = BorrowedStrDeserializer::<'_, Error>::new(&encoded);
-                    let a: Bytes = BytesDeserialize::deserialize(deserializer).unwrap().0;
-                    let b: Vec<u8> = BytesDeserialize::deserialize(deserializer).unwrap().0;
+                let deserializer = BorrowedStrDeserializer::<'_, Error>::new(&encoded);
+                let a: Bytes = BytesDeserialize::deserialize(deserializer).unwrap().0;
+                let b: Vec<u8> = BytesDeserialize::deserialize(deserializer).unwrap().0;
 
-                    assert_eq!(raw.as_slice(), &a);
-                    assert_eq!(raw.as_slice(), &b);
-                }
+                assert_eq!(raw.as_slice(), &a);
+                assert_eq!(raw.as_slice(), &b);
             }
         }
     }

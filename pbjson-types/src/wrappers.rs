@@ -32,9 +32,7 @@ macro_rules! ser_bytes_value {
             where
                 S: serde::Serializer,
             {
-                use pbjson::private::base64::engine::Engine;
-                let value =
-                    pbjson::private::base64::engine::general_purpose::STANDARD.encode(&self.value);
+                let value = hex::encode_upper(&self.value);
                 value.serialize(ser)
             }
         }
