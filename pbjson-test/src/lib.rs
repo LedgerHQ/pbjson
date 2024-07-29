@@ -470,7 +470,7 @@ mod tests {
         verify_decode(&decoded, "{}");
 
         decoded.bytes = prost::bytes::Bytes::from_static(b"kjkjkj");
-        verify(&decoded, r#"{"bytes":"a2pramtq"}"#);
+        verify(&decoded, r#"{"bytes":"6B6A6B6A6B6A"}"#);
 
         decoded.bytes = Default::default();
         verify_decode(&decoded, "{}");
@@ -479,8 +479,8 @@ mod tests {
         verify(
             &decoded,
             (
-                r#"{"optionalBytes":"a2pramtq"}"#,
-                r#"{"optional_bytes":"a2pramtq"}"#,
+                r#"{"optionalBytes":"6B6A6B6A6B6A"}"#,
+                r#"{"optional_bytes":"6B6A6B6A6B6A"}"#,
             ),
         );
 
@@ -500,8 +500,8 @@ mod tests {
         verify(
             &decoded,
             (
-                r#"{"repeatedBytes":["c2Rmc2Q=","ZmdoZmc="]}"#,
-                r#"{"repeated_bytes":["c2Rmc2Q=","ZmdoZmc="]}"#,
+                r#"{"repeatedBytes":["7364667364","6667686667"]}"#,
+                r#"{"repeated_bytes":["7364667364","6667686667"]}"#,
             ),
         );
 
@@ -515,8 +515,8 @@ mod tests {
         verify(
             &decoded,
             (
-                r#"{"stringBytesDict":{"test":"YXNkZg=="}}"#,
-                r#"{"string_bytes_dict":{"test":"YXNkZg=="}}"#,
+                r#"{"stringBytesDict":{"test":"61736466"}}"#,
+                r#"{"string_bytes_dict":{"test":"61736466"}}"#,
             ),
         );
 
@@ -529,8 +529,8 @@ mod tests {
         verify(
             &decoded,
             (
-                r#"{"intBytesDict":{"43":"MzQzZGZnZA=="}}"#,
-                r#"{"int_bytes_dict":{"43":"MzQzZGZnZA=="}}"#,
+                r#"{"intBytesDict":{"43":"33343364666764"}}"#,
+                r#"{"int_bytes_dict":{"43":"33343364666764"}}"#,
             ),
         );
 
@@ -619,8 +619,8 @@ mod tests {
         verify(
             &decoded,
             (
-                r#"{"bytesValue":"a2pramtq"}"#,
-                r#"{"bytes_value":"a2pramtq"}"#,
+                r#"{"bytesValue":"6B6A6B6A6B6A"}"#,
+                r#"{"bytes_value":"6B6A6B6A6B6A"}"#,
             ),
         );
 
